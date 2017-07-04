@@ -80,9 +80,13 @@ defmodule Guardian.Plug.VerifyHeader do
 
   defp fetch_token(conn, opts = %{realm_reg: reg}, [token|tail]) do
     trimmed_token = String.strip(token)
-    case Regex.run(reg, trimmed_token) do
-      [_, match] -> String.strip(match)
-      _ -> fetch_token(conn, opts, tail)
+    case String.split(trimmed_token, ",") do
+      [_unsplit_token] -> case Regex.run(reg, trimmed_token) do
+        [_, match] -> String.strip(match)
+        _ -> fetch_token(conn, opts, tail)
+      end
+      [_split_token|_split_tail] = new_token ->
+        fetch_token(conn, opts, new_token)
     end
   end
 
